@@ -6,22 +6,10 @@ package com.synconset;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.HostnameVerifier;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -32,8 +20,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.res.AssetManager;
-import android.util.Base64;
-import android.util.Log;
 
 import com.github.kevinsawicki.http.HttpRequest;
 
@@ -65,18 +51,27 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             cordova.getThreadPool().execute(head);
         } else if (action.equals("post")) {
             String urlString = args.getString(0);
-            JSONObject params = args.getJSONObject(1);
             JSONObject headers = args.getJSONObject(2);
-            HashMap<?, ?> paramsMap = this.getMapFromJSONObject(params);
             HashMap<String, String> headersMap = this.getStringMapFromJSONObject(headers);
-            CordovaHttpPost post = new CordovaHttpPost(urlString, paramsMap, headersMap, callbackContext);
-            cordova.getThreadPool().execute(post);
+            Object reqData = args.get(1);
+            if (reqData instanceof String) {
+                String params = args.getString(1);
+                CordovaHttpPostString post = new CordovaHttpPostString(urlString, params, headersMap, callbackContext);
+                cordova.getThreadPool().execute(post);
+            } else if (reqData instanceof JSONObject) {
+                JSONObject params = args.getJSONObject(1);
+                HashMap<?, ?> paramsMap = this.getMapFromJSONObject(params);
+                CordovaHttpPost post = new CordovaHttpPost(urlString, paramsMap, headersMap, callbackContext);
+                cordova.getThreadPool().execute(post);
+            } else {
+                callbackContext.error("Request param not yet implemented!");
+            }
         } else if (action.equals("enableSSLPinning")) {
             try {
                 boolean enable = args.getBoolean(0);
                 this.enableSSLPinning(enable);
                 callbackContext.success();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 callbackContext.error("There was an error setting up ssl pinning");
             }
@@ -131,12 +126,12 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             // scan the www/certificates folder for .cer files as well
             files = assetManager.list("www/certificates");
             for (int i = 0; i < files.length; i++) {
-              index = files[i].lastIndexOf('.');
-              if (index != -1) {
-                if (files[i].substring(index).equals(".cer")) {
-                  cerFiles.add("www/certificates/" + files[i]);
+                index = files[i].lastIndexOf('.');
+                if (index != -1) {
+                    if (files[i].substring(index).equals(".cer")) {
+                        cerFiles.add("www/certificates/" + files[i]);
+                    }
                 }
-              }
             }
 
             for (int i = 0; i < cerFiles.size(); i++) {
@@ -155,7 +150,7 @@ public class CordovaHttpPlugin extends CordovaPlugin {
         Iterator<?> i = object.keys();
 
         while (i.hasNext()) {
-            String key = (String)i.next();
+            String key = (String) i.next();
             map.put(key, object.getString(key));
         }
         return map;
@@ -165,8 +160,8 @@ public class CordovaHttpPlugin extends CordovaPlugin {
         HashMap<String, Object> map = new HashMap<String, Object>();
         Iterator<?> i = object.keys();
 
-        while(i.hasNext()) {
-            String key = (String)i.next();
+        while (i.hasNext()) {
+            String key = (String) i.next();
             map.put(key, object.get(key));
         }
         return map;
