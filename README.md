@@ -119,16 +119,35 @@ Most apis will return JSON meaning you'll want to parse the data like in the exa
         console.log(response.status);
         
         //prints Permission denied 
-        console.log(response.error);
+        console.log(response.data);
     });
     
+Sometimes you will need to send post request with message body as plain text (String) this library works handle this:
+
+    cordovaHTTP.post("https://google.com/", "test={data: 'test'}", { Authorization: "OAuth2: token" }, function(response) {
+        // prints 200
+        console.log(response.status);
+        try {
+            response.data = JSON.parse(response.data);
+            // prints test
+            console.log(response.data.message);
+        } catch(e) {
+            console.error("JSON parsing error");
+        }
+    }, function(response) {
+        // prints 403
+        console.log(response.status);
+        
+        //prints Permission denied 
+        console.log(response.data);
+    });
     
 #### failure
 The error function receives a response object with 3 properties: status, error and headers.  Status is the HTTP response code.  Error is the error response from the server as a string.  Headers is an object with the headers.  Here's a quick example:
 
     {
         status: 403,
-        error: "Permission denied",
+        data: "Permission denied",
         headers: {
             "Content-Length": "247"
         }
@@ -143,7 +162,7 @@ Execute a GET request.  Takes a URL, parameters, and headers.  See the [post](#p
     }, { Authorization: "OAuth2: token" }, function(response) {
         console.log(response.status);
     }, function(response) {
-        console.error(response.error);
+        console.error(response.data);
     });
     
 ### uploadFile
@@ -155,7 +174,7 @@ Uploads a file saved on the device.  Takes a URL, parameters, headers, filePath,
     }, { Authorization: "OAuth2: token" }, "file:///somepicture.jpg", "picture", function(response) {
         console.log(response.status);
     }, function(response) {
-        console.error(response.error);
+        console.error(response.data);
     });
     
 ### downloadFile
@@ -171,7 +190,7 @@ Downloads a file and saves it to the device.  Takes a URL, parameters, headers, 
         // prints the filePath
         console.log(entry.fullPath);
     }, function(response) {
-        console.error(response.error);
+        console.error(response.data);
     });
 
 
