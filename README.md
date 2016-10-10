@@ -24,6 +24,8 @@ using the Cordova / Phonegap command line interface.
 ## Usage
 
 This plugin registers a `cordovaHTTP` global on window or you can get via `cordova.require`
+
+
     try {
          var CordovaHttpPlugin = window.cordova.require('cordova-plugin-http.CordovaHttpPlugin');
          //do stuff
